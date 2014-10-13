@@ -1,45 +1,38 @@
-%define		abi		5.14.0
+# based on PLD Linux spec git://git.pld-linux.org/packages/perl.git
+%define		abi		5.20.0
 
-%define		perlthread	-thread-multi
-
-%define		perl_archlib	%{_libdir}/perl5/%{version}/%{_target_platform}%{perlthread}
-%define		perl_privlib	%{_datadir}/perl5/%{version}
-%define		perl_sitearch	%{_usr}/local/lib/perl5/%{abi}/%{_target_platform}%{perlthread}
-%define		perl_sitelib	%{_usr}/local/share/perl5
-%define		perl_vendorarch	%{_libdir}/perl5/vendor_perl/%{abi}/%{_target_platform}%{perlthread}
+# distribution
+%define		perl_archlib	%{_libdir}/perl5
+%define		perl_privlib	%{_datadir}/perl5
+# 3rd party
+%define		perl_vendorarch	%{_libdir}/perl5/vendor_perl
 %define		perl_vendorlib	%{_datadir}/perl5/vendor_perl
+# CPAN
+%define		perl_sitearch	%{_prefix}/local/%{_lib}/perl5
+%define		perl_sitelib	%{_prefix}/local/share/perl5
 
 %define		__perl			%{_builddir}/perl-%{version}/runperl
-%define		__perl_provides		%{__perl} %{SOURCE2}
-
-%bcond_without	gdbm	# build without the GDBM_File module
+%define		__perl_provides		%{__perl} %{SOURCE1}
 
 Summary:	Practical Extraction and Report Language (Perl)
 Name:		perl
-Version:	5.14.2
-Release:	5
+Version:	5.20.1
+Release:	1
 Epoch:		1
 License:	GPL v1+ or Artistic
 Group:		Development/Languages/Perl
 Source0:	http://www.cpan.org/src/%{name}-%{version}.tar.gz
-# Source0-md5:	3306fbaf976dcebdcd49b2ac0be00eb9
-Source2:	%{name}.prov
-Source3:	%{name}-modules
+# Source0-md5:	7a195abb7d6769f751e90c7d30dcf2e0
+Source1:	%{name}.prov
 Patch0:		%{name}-errno_h-parsing.patch
 Patch1:		%{name}-soname.patch
 Patch2:		%{name}-test-noproc.patch
 Patch3:		%{name}-write-permissions.patch
 URL:		http://dev.perl.org/perl5/
-%{?with_gdbm:BuildRequires:	gdbm-devel}
+BuildRequires:	gdbm-devel
 Requires:	%{name}-base = %{epoch}:%{version}-%{release}
-Requires:	%{name}-doc-reference = %{epoch}:%{version}-%{release}
 Requires:	%{name}-modules = %{epoch}:%{version}-%{release}
-Requires:	perldoc
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-
-# extract module version from source
-%define		perl_modver()		%([ -f %{SOURCE3} ] && awk -vp=%1 '$1 == p{print $3}' %{SOURCE3} || echo ERROR)
-%define		perl_modversion()	%([ -f %{SOURCE3} ] && awk -vp=%1 '$1 == p{m=$1; gsub(/::/, "-", m); printf("perl-%s = %s\\n", m, $3)}END{if (!m) printf("# Error looking up [%s]\\n", p)}' %{SOURCE3} || echo ERROR)
 
 %description
 Perl is an interpreted language optimized for scanning arbitrary text
@@ -62,15 +55,19 @@ Group:		Development/Languages/Perl
 Requires:	%{name}-libs = %{epoch}:%{version}-%{release}
 Requires:	%{perl_vendorarch}
 Requires:	%{perl_vendorlib}
+Provides:	perl(File::Compare)
+Provides:	perl(File::Temp)
+Provides:	perl(IO)
+Provides:	perl(IO-Compress)
+Provides:	perl(IO::Zlib)
+Provides:	perl(IPC::Cmd)
+Provides:	perl(PathTools)
+Provides:	perl(PerlIO::via::QuotedPrint)
+Provides:	perl(Socket)
+Provides:	perl(Tie::File)
+Provides:	perl(Tie::RefHash)
 Provides:	perl(largefiles)
-Provides:	%perl_modversion File::Compare
-Provides:	%perl_modversion File::Spec
-Provides:	%perl_modversion File::Temp
-Provides:	%perl_modversion IO
-Provides:	%perl_modversion PerlIO::via::QuotedPrint
-Provides:	%perl_modversion Safe
-Provides:	%perl_modversion Socket
-Provides:	%perl_modversion Tie::File
+Provides:	perl(parent)
 
 %description base
 Base components, files, core modules, etc. -- a minimal usable Perl
@@ -83,13 +80,19 @@ Group:		Development/Libraries
 Requires:	%{name}-base = %{epoch}:%{version}-%{release}
 Requires:	%{name}-modules = %{epoch}:%{version}-%{release}
 Requires:	%{name}-tools-pod = %{epoch}:%{version}-%{release}
-Provides:	%perl_modversion CPAN
-Provides:	%perl_modversion Devel::DProf
-Provides:	%perl_modversion Devel::PPPort
-Provides:	%perl_modversion Devel::Peek
-Provides:	%perl_modversion ExtUtils::Embed
-Provides:	%perl_modversion ExtUtils::MakeMaker
-Provides:	%perl_modversion Module::Build
+Provides:	perl(CPAN)
+Provides:	perl(CPAN::Meta)
+Provides:	perl(CPAN::Meta::YAML)
+Provides:	perl(Devel::PPPort)
+Provides:	perl(Devel::Peek)
+Provides:	perl(ExtUtils::CBuilder)
+Provides:	perl(ExtUtils::Command)
+Provides:	perl(ExtUtils::Embed)
+Provides:	perl(ExtUtils::Install)
+Provides:	perl(ExtUtils::MakeMaker)
+Provides:	perl(ExtUtils::Manifest)
+Provides:	perl(ExtUtils::ParseXS)
+Provides:	perl(Module::Build)
 
 %description devel
 Components required for developing applications which embed a Perl
@@ -115,38 +118,55 @@ Language and it's interpreter in the man(1) format.
 Summary:	Modules from the core Perl distribution
 Group:		Libraries
 Requires:	%{name}-base = %{epoch}:%{version}-%{release}
-Provides:	%perl_modversion Attribute::Handlers
-Provides:	%perl_modversion CGI
-Provides:	%perl_modversion Digest
-Provides:	%perl_modversion Digest::MD5
-Provides:	%perl_modversion Filter::Simple
-Provides:	%perl_modversion FindBin
-Provides:	%perl_modversion I18N::LangTags
-Provides:	%perl_modversion IPC::SysV
-Provides:	%perl_modversion Locale::Maketext
-Provides:	%perl_modversion MIME::Base64
-Provides:	%perl_modversion Math::BigInt
-Provides:	%perl_modversion Math::BigRat
-Provides:	%perl_modversion Math::Trig
-Provides:	%perl_modversion Memoize
-Provides:	%perl_modversion NEXT
-Provides:	%perl_modversion Pod::LaTeX
-Provides:	%perl_modversion Pod::Parser
-Provides:	%perl_modversion Storable
-Provides:	%perl_modversion Term::ANSIColor
-Provides:	%perl_modversion Term::Cap
-Provides:	%perl_modversion Test
-Provides:	%perl_modversion Test::Harness
-Provides:	%perl_modversion Test::Simple
-Provides:	%perl_modversion Text::Balanced
-Provides:	%perl_modversion Text::ParseWords
-Provides:	%perl_modversion Text::Soundex
-Provides:	%perl_modversion Time::HiRes
-Provides:	%perl_modversion UNIVERSAL
-Provides:	%perl_modversion Unicode::Collate
-Provides:	%perl_modversion Unicode::Normalize
-Provides:	%perl_modversion libnet
-Provides:	%perl_modversion version
+Provides:	perl(Scalar-List-Utils)
+Provides:	perl(Archive::Tar)
+Provides:	perl(Attribute::Handlers)
+Provides:	perl(CGI)
+Provides:	perl(Compress::Raw::Bzip2)
+Provides:	perl(Compress::Raw::Zlib)
+Provides:	perl(Digest)
+Provides:	perl(Digest::MD5)
+Provides:	perl(Digest::SHA)
+Provides:	perl(Filter::Simple)
+Provides:	perl(FindBin)
+Provides:	perl(I18N::LangTags)
+Provides:	perl(IPC::SysV
+Provides:	perl(JSON::PP)
+Provides:	perl(Locale::Codes)
+Provides:	perl(Locale::Maketext)
+Provides:	perl(Locale::Maketext::Simple)
+Provides:	perl(MIME::Base64)
+Provides:	perl(Math::BigInt)
+Provides:	perl(Math::BigInt::FastCalc)
+Provides:	perl(Math::BigRat)
+Provides:	perl(Math::Complex)
+Provides:	perl(Math::Trig)
+Provides:	perl(Memoize)
+Provides:	perl(Module::CoreList)
+Provides:	perl(Module::Load)
+Provides:	perl(Module::Load::Conditional)
+Provides:	perl(Module::Metadata)
+Provides:	perl(NEXT)
+Provides:	perl(Pod::Parser)
+Provides:	perl(Pod::Simple)
+Provides:	perl(Safe)
+Provides:	perl(Storable)
+Provides:	perl(Sys::Syslog)
+Provides:	perl(Term::ANSIColor)
+Provides:	perl(Term::Cap)
+Provides:	perl(Test)
+Provides:	perl(Test::Harness)
+Provides:	perl(Test::Simple)
+Provides:	perl(Text::Balanced)
+Provides:	perl(Text::ParseWords)
+Provides:	perl(Time::HiRes)
+Provides:	perl(Time::Piece)
+Provides:	perl(UNIVERSAL)
+Provides:	perl(Unicode::Collate)
+Provides:	perl(Unicode::Normalize)
+Provides:	perl(bignum)
+Provides:	perl(libnet)
+Provides:	perl(version)
 
 %description modules
 Practical Extraction and Report Language - modules from the core
@@ -158,6 +178,7 @@ Group:		Development/Tools
 Requires:	%{name}-modules = %{epoch}:%{version}-%{release}
 Requires:	%{name}-tools-pod = %{epoch}:%{version}-%{release}
 Provides:	perldoc = 3.14_02@%{version}
+Requires:       groff
 
 %description perldoc
 perldoc looks up a piece of documentation in .pod format that is
@@ -178,7 +199,7 @@ psed, s2p	- a stream editor
 and others.
 
 %package tools-devel
-Summary:	Developer's tools from the core Perl distribution
+Summary:	Devel2oper's tools from the core Perl distribution
 Group:		Development/Tools
 Requires:	%{name}-base = %{epoch}:%{version}-%{release}
 Requires:	%{name}-devel = %{epoch}:%{version}-%{release}
@@ -219,7 +240,6 @@ podselect	- print selected sections of pod documentation
 
 cat > runperl <<'EOF'
 #!/bin/sh
-set +x
 LD_PRELOAD="%{_builddir}/%{name}-%{version}/libperl.so.%{abi}" \
 PERL5LIB="%{buildroot}%{perl_privlib}:%{buildroot}%{perl_archlib}" \
 exec %{buildroot}%{_bindir}/perl ${1:+"$@"}
@@ -234,27 +254,29 @@ sh Configure \
 	-Dccdlflags='-rdynamic' 					\
 	-Dlddlflags="-shared %{rpmldflags}"				\
 	-Dldflags="%{rpmldflags}"					\
+	-Doptimize="%{rpmcflags}"					\
 	-Dldlibpthname=none						\
-	-Dlibpth="%{_libdir} /%{_lib}"					\
-	-Dlibswanted="dl m c crypt %{?with_gdbm:gdbm}"			\
+	-Dprefix=%{_prefix}						\
+	-Dlibpth="%{_libdir}"						\
+	-Dsitearch=%{perl_sitearch}					\
+	-Dsitelib=%{perl_sitelib}					\
+	-Dsiteprefix=%{_usr}/local					\
+	-Dprivlib=%{perl_privlib}					\
+	-Darchlib=%{perl_archlib}					\
+	-Dvendorlib=%{perl_vendorlib}					\
+	-Dvendorarch=%{perl_vendorarch}					\
+	-Dvendorprefix=%{_prefix}					\
 	-Dman1dir=%{_mandir}/man1 -Dman1ext=1				\
 	-Dman3dir=%{_mandir}/man3 -Dman3ext=3perl			\
-	-Doptimize="%{rpmcflags}"					\
-	-Dprefix=%{_prefix} -Dvendorprefix=%{_prefix} -Dsiteprefix=%{_usr}/local \
-	-Dprivlib=%{perl_privlib} -Darchlib=%{perl_archlib}		\
-	-Dsitelib=%{perl_sitelib} -Dsitearch=%{perl_sitearch}		\
 	-Dsiteman1dir=%{_usr}/local/man/man1 -Dsiteman1ext=1p		\
 	-Dsiteman3dir=%{_usr}/local/man/man3 -Dsiteman3ext=3pm		\
+	-Dvendorman1dir=%{_mandir}/man1 -Dvendorman1ext=1p		\
+	-Dvendorman3dir=%{_mandir}/man3 -Dvendorman3ext=3pm		\
 	-Duselargefiles							\
 	-Duseshrplib							\
 	-Dusethreads							\
-	-Dvendorlib=%{perl_vendorlib} -Dvendorarch=%{perl_vendorarch}	\
-	-Dvendorman1dir=%{_mandir}/man1 -Dvendorman1ext=1p		\
-	-Dvendorman3dir=%{_mandir}/man3 -Dvendorman3ext=3pm		\
 	-UDEBUGGING							\
-	-Ui_db								\
-	%{!?with_gdbm: -Ui_dbm -Ui_gdbm -Ui_ndbm}			\
-	%{?with_gdbm: -Ui_dbm -Di_gdbm -Ui_ndbm}			\
+	-Ui_db -Ui_dbm -Di_gdbm -Ui_ndbm				\
 	-des
 %{__make} \
 	LIBPERL_SONAME=libperl.so.%{abi} \
@@ -262,142 +284,90 @@ sh Configure \
 
 
 %install
-if [ ! -f makeinstall.stamp -o ! -d $RPM_BUILD_ROOT ]; then
-	rm -rf makeinstall.stamp installed.stamp $RPM_BUILD_ROOT
+%{__make} install \
+	DESTDIR=$RPM_BUILD_ROOT
 
-	%{__make} install \
-		DESTDIR=$RPM_BUILD_ROOT
-	touch makeinstall.stamp
-fi
+# use symlinks instead of hardlinks
+%{__ln_s} -f perl%{version} $RPM_BUILD_ROOT%{_bindir}/perl
+%{__ln_s} -f c2ph $RPM_BUILD_ROOT%{_bindir}/pstruct
+%{__ln_s} -f psed $RPM_BUILD_ROOT%{_bindir}/s2p
 
-if [ ! -f installed.stamp ]; then
-	install -d $RPM_BUILD_ROOT%{_mandir}/{ja,ko,zh_CN,zh_TW}/man1
+install -d $RPM_BUILD_ROOT%{perl_vendorarch}
+# install directory needed by packages dependant on TAP::Harness
+install -d $RPM_BUILD_ROOT%{perl_privlib}/TAP/Harness
+# install directory needed by packages dependant on Encode
+install -d $RPM_BUILD_ROOT%{perl_vendorlib}/Encode
 
-	install -d $RPM_BUILD_ROOT%{perl_vendorlib}/Encode
+# Fix library version
+%{__rm} $RPM_BUILD_ROOT%{perl_archlib}/CORE/libperl.so
+mv $RPM_BUILD_ROOT%{perl_archlib}/CORE/libperl.so.%{abi} $RPM_BUILD_ROOT%{_libdir}
+%{__ln_s} ../../../../libperl.so.%{abi} $RPM_BUILD_ROOT%{perl_archlib}/CORE/libperl.so.%{abi}
+%{__ln_s} libperl.so.%{abi} $RPM_BUILD_ROOT%{_libdir}/libperl.so
 
-	## use symlinks instead of hardlinks
-	%{__ln_s} -f perl%{version} $RPM_BUILD_ROOT%{_bindir}/perl
-	%{__ln_s} -f c2ph $RPM_BUILD_ROOT%{_bindir}/pstruct
-	%{__ln_s} -f psed $RPM_BUILD_ROOT%{_bindir}/s2p
+# installed as non-executable - let rpm generate deps
+chmod 755 $RPM_BUILD_ROOT%{_libdir}/libperl.so.%{abi}
 
-	## Fix library version
-	%{__rm} $RPM_BUILD_ROOT%{perl_archlib}/CORE/libperl.so
-	mv $RPM_BUILD_ROOT%{perl_archlib}/CORE/libperl.so.%{abi} $RPM_BUILD_ROOT%{_libdir}
-	%{__ln_s} ../../../../libperl.so.%{abi} $RPM_BUILD_ROOT%{perl_archlib}/CORE/libperl.so.%{abi}
-	%{__ln_s} libperl.so.%{abi} $RPM_BUILD_ROOT%{_libdir}/libperl.so
+# Fix Config.pm: remove buildroot path and change man pages extensions
+%{__perl} -pi -e 's,%{buildroot}/*,/,g'			$RPM_BUILD_ROOT%{perl_archlib}/Config.pm
+%{__perl} -pi -e "s,^man1ext='1',man1ext='1p',"		$RPM_BUILD_ROOT%{perl_archlib}/Config_heavy.pl
+%{__perl} -pi -e "s,^man3ext='3perl',man3ext='3pm',"	$RPM_BUILD_ROOT%{perl_archlib}/Config_heavy.pl
 
-	# installed as non-executable - let rpm generate deps
-	chmod 755 $RPM_BUILD_ROOT%{_libdir}/libperl.so.%{abi}
+# Generate the *.ph files
+owd=$(pwd)
+cd /usr/include
+H2PH=$RPM_BUILD_ROOT%{_bindir}/h2ph
+PHDIR=$RPM_BUILD_ROOT%{perl_archlib}
+WANTED='
+	syscall.h
+	syslog.h
+	termios.h
+	wait.h
+	asm/termios.h
+	sys/ioctl.h
+	sys/socket.h
+	sys/syscall.h
+	sys/time.h
+	linux/posix_types.h
+	linux/stddef.h
+'
+%{__perl} $H2PH -a -d $PHDIR $WANTED || :
+cd "$owd"
 
-	## Fix Config.pm: remove buildroot path and change man pages extensions
-	%{__perl} -pi -e 's,%{buildroot}/*,/,g'			$RPM_BUILD_ROOT%{perl_archlib}/Config.pm
-	%{__perl} -pi -e "s,^man1ext='1',man1ext='1p',"		$RPM_BUILD_ROOT%{perl_archlib}/Config_heavy.pl
-	%{__perl} -pi -e "s,^man3ext='3perl',man3ext='3pm',"	$RPM_BUILD_ROOT%{perl_archlib}/Config_heavy.pl
+# remove man pages for other operating systems
+%{__rm}	$RPM_BUILD_ROOT%{_mandir}/man1/perl{aix,amiga,bs2000,ce,cygwin,dos}* \
+	$RPM_BUILD_ROOT%{_mandir}/man1/perl{freebsd,hpux,macos,os2,os390}* \
+	$RPM_BUILD_ROOT%{_mandir}/man1/perl{qnx,solaris,vms,vos,win32}*
 
-	## Generate the *.ph files
-	owd=$(pwd)
-	cd /usr/include
-	H2PH=$RPM_BUILD_ROOT%{_bindir}/h2ph
-	PHDIR=$RPM_BUILD_ROOT%{perl_archlib}
-	WANTED='
-		syscall.h
-		syslog.h
-		termios.h
-		wait.h
-		asm/termios.h
-		sys/ioctl.h
-		sys/socket.h
-		sys/syscall.h
-		sys/time.h
-		linux/posix_types.h
-		linux/stddef.h
-	'
-	# why it returns non-zero???
-	%{__perl} $H2PH -a -d $PHDIR $WANTED || :
-	cd "$owd"
+#  File::Spec submodules are for non-Unix systems
+%{__rm} $RPM_BUILD_ROOT%{perl_archlib}/File/Spec/[EMOVW]*.pm
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man3/File::Spec::{Epoc,Mac,OS2,VMS,Win32}.3perl*
 
-	## remove man pages for other operating systems
-	%{__rm}	$RPM_BUILD_ROOT%{_mandir}/man1/perl{aix,amiga,beos,bs2000,ce,cygwin,dgux,dos}* \
-		$RPM_BUILD_ROOT%{_mandir}/man1/perl{freebsd,hpux,macos,mpeix,os2,os390}* \
-		$RPM_BUILD_ROOT%{_mandir}/man1/perl{qnx,solaris,vmesa,vms,vos,win32}*
+# We already have these *.pod files as man pages
+%{__rm} $RPM_BUILD_ROOT%{perl_privlib}/{Encode,Test,Net,Locale{,/Maketext},version}/*.pod
+%{__rm} $RPM_BUILD_ROOT%{perl_privlib}/pod/a2p.pod
+%{__rm} $RPM_BUILD_ROOT%{perl_privlib}/*.pod
+%{__rm} $RPM_BUILD_ROOT%{perl_archlib}/*.pod
 
-	## symlink perldelta.1.gz -> perlFOOdelta.1.gz
-	[ -e $RPM_BUILD_ROOT%{_mandir}/man1/perl%(echo %{version} | tr -d .)delta.1 ] || exit 1
-	rm $RPM_BUILD_ROOT%{_mandir}/man1/perldelta.1
-	echo ".so perl%(echo %{version} | tr -d .)delta.1" >$RPM_BUILD_ROOT%{_mandir}/man1/perldelta.1
-
-	## These File::Spec submodules are for non-Unix systems
-	rm $RPM_BUILD_ROOT%{_mandir}/man3/File::Spec::{Epoc,Mac,OS2,VMS,Win32}.3perl*
-
-	## We already have these *.pod files as man pages
-	%{__rm} $RPM_BUILD_ROOT%{perl_privlib}/{Encode,Test,Net,Locale{,/Maketext}}/*.pod
-	rm $RPM_BUILD_ROOT%{perl_privlib}/pod/a2p.pod
-	%{__rm} $RPM_BUILD_ROOT%{perl_privlib}/*.pod
-	%{__rm} $RPM_BUILD_ROOT%{perl_archlib}/*.pod
-
-	## this object file looks unused; why is it there?
-
-	install -d doc-base/{Getopt/Long,Switch} \
-		doc-devel/ExtUtils \
-		doc-modules/{Attribute/Handlers,Filter/Simple,I18N/LangTags,Locale/{Codes,Maketext},Memoize,NEXT} \
-		doc-modules/{Net/Ping,Term/ANSIColor,Test/Simple,Text/{Balanced,TabsWrap},Unicode/Collate,unicore}
-
-	# needed only for tests
-	%{__rm} $RPM_BUILD_ROOT%{perl_privlib}/Unicode/Collate/keys.txt
-	# cpan tools, we use rpm instead of cpan for managing packages (some search tool would be nice to have but...)
-	%{__rm} $RPM_BUILD_ROOT%{_bindir}/cpan*
-	%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/cpan*
-	# others
-	%{__rm} $RPM_BUILD_ROOT%{_bindir}/config_data
-	%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/config_data*
-	%{__rm} $RPM_BUILD_ROOT%{_mandir}/man3/XS::Typemap*
-
-	owd=$(pwd)
-
-	mv -f $RPM_BUILD_ROOT%{_mandir}/man1/perlcn.* $RPM_BUILD_ROOT%{_mandir}/zh_CN/man1
-	mv -f $RPM_BUILD_ROOT%{_mandir}/man1/perljp.* $RPM_BUILD_ROOT%{_mandir}/ja/man1
-	mv -f $RPM_BUILD_ROOT%{_mandir}/man1/perlko.* $RPM_BUILD_ROOT%{_mandir}/ko/man1
-	mv -f $RPM_BUILD_ROOT%{_mandir}/man1/perltw.* $RPM_BUILD_ROOT%{_mandir}/zh_TW/man1
-
-	# `perl -MExtUtils::Embed -e ldopts` includes -Wl,--as-needed
-	# which is then forced upon anyone embedding perl.
-	sed -i -e 's#^\(ld.*=.*\)-Wl,--as-needed\(.*\)#\1 \2#g' $RPM_BUILD_ROOT%{perl_archlib}/Config*.pl
-
-	rm -rf $RPM_BUILD_ROOT%{_mandir}/README.perl-non-english-man-pages
-
-	touch installed.stamp
-fi
-
-# update and check perl-modules file
-echo '# Module versions from Perl %{version} distribution.' > perl-modules
-for m in $(awk '!/^#/ && !/^$/{print $1}' %{SOURCE3}); do
-	case $m in
-	Devel::DProf)
-#		+ perl -ilib -MDevel::DProf -e print 'Devel-DProf = ',$Devel::DProf::VERSION
-#		DProf: run perl with -d to use DProf.
-#		Compilation failed in require.
-#		BEGIN failed--compilation aborted.
-		v=$(%{__perl} -e 'do "Devel/DProf.pm"; print $Devel::DProf::VERSION')
-		;;
-	libnet)
-		v=$(awk '/^libnet /{print $2; exit}' cpan/libnet/Changes)
-		;;
-	*)
-		v=$(%{__perl} -M$m -e "print $m->VERSION" )
-		;;
-	esac
-	echo "$m = $v" >> perl-modules
-done
-
-egrep -v '^([ 	]*$|[;#])' %{SOURCE3} > .mods1
-egrep -v '^([ 	]*$|[;#])' perl-modules > .mods2
-if ! cmp -s .mods1 .mods2; then
-	: %{SOURCE3} outdated with $(pwd)/perl-modules
-	exit 1
-fi
+# cpan tools, we use rpm instead of cpan for managing packages (some search tool would be nice to have but...)
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/cpan*
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/cpan*
+# others
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/config_data
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/config_data*
 
 %check
-#%%{__make} test -j1
+%if 0
+#   Failed test 'DummyHard.pm not writeable'
+#   at t/Install.t line 240.
+
+#   Failed test 'DummyOrig.pm not writeable'
+#   at t/Install.t line 264.
+# Looks like you failed 2 tests of 60.
+# ../dist/ExtUtils-Install/t/Install.t .............................. Dubious, test returned 2 (wstat 512, 0x200)
+# Failed 2/60 subtests
+
+%{__make} test_harness -j1
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -416,23 +386,19 @@ rm -rf $RPM_BUILD_ROOT
 
 %files base
 %defattr(644,root,root,755)
-%doc doc-base/*
 %attr(755,root,root) %{_bindir}/perl
 %attr(755,root,root) %{_bindir}/perl%{version}
 %{_mandir}/man1/perl.1*
 
+%dir %{perl_archlib}
 %dir %{perl_archlib}/CORE
 %attr(755,root,root) %{perl_archlib}/CORE/libperl.so.%{abi}
-
-%dir %{_datadir}/perl5
-%dir %{_libdir}/perl5
-%dir %{_libdir}/perl5/%{version}
-%dir %{perl_archlib}
-%dir %{perl_archlib}/auto
 %dir %{perl_privlib}
+%dir %{perl_vendorarch}
+%dir %{perl_vendorlib}
 
-## pragmas
-%{perl_archlib}/lib.pm
+# pragmas
+%{perl_privlib}/_charnames*
 %{perl_privlib}/autodie*
 %{perl_privlib}/base.pm
 %{perl_privlib}/constant.pm
@@ -447,6 +413,8 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_privlib}/subs.pm
 %{perl_privlib}/vars.pm
 %{perl_privlib}/warnings*
+%{perl_privlib}/experimental.pm
+%{_mandir}/man3/experimental.*
 %{_mandir}/man3/autodie*
 %{_mandir}/man3/base.*
 %{_mandir}/man3/constant.*
@@ -454,7 +422,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/feature.*
 %{_mandir}/man3/fields.*
 %{_mandir}/man3/integer.*
-%{_mandir}/man3/lib.*
 %{_mandir}/man3/overload*
 %{_mandir}/man3/parent.*
 %{_mandir}/man3/sort.*
@@ -463,7 +430,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/vars.*
 %{_mandir}/man3/warnings*
 
-## arch-_IN_dependent modules
+%{perl_archlib}/lib.pm
+%{_mandir}/man3/lib.*
+
+# arch-_IN_dependent modules
 %dir %{perl_privlib}/Class
 %{perl_privlib}/Auto*
 %{perl_privlib}/Carp*
@@ -491,7 +461,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Tie::*
 %{_mandir}/man3/XSLoader*
 
-## arch-dependent modules
+# arch-dependent modules
 %{_mandir}/man3/Config.*
 %{_mandir}/man3/DynaLoader*
 %{_mandir}/man3/Errno*
@@ -500,9 +470,10 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_archlib}/Errno*
 %{perl_archlib}/Tie
 
+%dir %{perl_archlib}/auto
 %attr(755,root,root) %{perl_archlib}/auto/Cwd/*.so
 %dir %{perl_archlib}/auto/Cwd
-%{perl_archlib}/Cwd.*
+%{perl_archlib}/Cwd.pm
 %{_mandir}/man3/Cwd.*
 
 %{perl_archlib}/Fcntl.*
@@ -538,10 +509,6 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_archlib}/POSIX*
 %dir %{perl_archlib}/auto/POSIX
 %attr(755,root,root) %{perl_archlib}/auto/POSIX/*.so
-%{perl_archlib}/auto/POSIX/*.al
-%{perl_archlib}/auto/POSIX/*.ix
-%{perl_archlib}/auto/POSIX/SigAction
-%{perl_archlib}/auto/POSIX/SigRt
 %{_mandir}/man3/POSIX.*
 
 %{perl_archlib}/Socket.*
@@ -549,9 +516,13 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{perl_archlib}/auto/Socket/*.so
 %{_mandir}/man3/Socket.*
 
+%{perl_archlib}/arybase.*
+%dir %{perl_archlib}/auto/arybase
+%attr(755,root,root) %{perl_archlib}/auto/arybase/*.so
+%{_mandir}/man3/arybase.*
+
 %files devel
 %defattr(644,root,root,755)
-%doc doc-devel/*
 %attr(755,root,root) %{_libdir}/libperl.so
 %attr(755,root,root) %{perl_archlib}/auto/B/*.so
 %attr(755,root,root) %{perl_archlib}/auto/Devel/*/*.so
@@ -602,22 +573,14 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/perlcheat.*
 %{_mandir}/man1/perlclib.*
 %{_mandir}/man1/perlcommunity.*
-%{_mandir}/man1/perlcompile.*
 %{_mandir}/man1/perld[!o]*
 %{_mandir}/man1/perli[!v]*
 
-%lang(zh_CN) %{_mandir}/zh_CN/man1/perlcn.*
-%lang(ja) %{_mandir}/ja/man1/perljp.*
-%lang(ko) %{_mandir}/ko/man1/perlko.*
-%lang(zh_TW) %{_mandir}/zh_TW/man1/perltw.*
-
 %files modules
 %defattr(644,root,root,755)
-%doc doc-modules/*
-
 %{perl_privlib}/unicore
 
-## pragmas
+# pragmas
 %{perl_privlib}/autouse.pm
 %{perl_privlib}/big*.pm
 %{perl_privlib}/blib.pm
@@ -632,7 +595,6 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_privlib}/open.pm
 %{perl_privlib}/sigtrap.pm
 %{perl_privlib}/utf8.pm
-%{perl_privlib}/version.pm
 %{_mandir}/man3/autouse.*
 %{_mandir}/man3/big*
 %{_mandir}/man3/blib.*
@@ -647,6 +609,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/open.*
 %{_mandir}/man3/sigtrap.*
 %{_mandir}/man3/utf8.*
+
+%dir %{perl_privlib}/version
+%{perl_privlib}/version.pm
+%{perl_privlib}/version/regex.pm
+%{perl_privlib}/version/vpp.pm
 %{_mandir}/man3/version*
 
 %attr(755,root,root) %{perl_archlib}/auto/attributes/*.so
@@ -672,10 +639,10 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_archlib}/threads*
 %{_mandir}/man3/t*
 
-## old *.pl files
+# old *.pl files
 %{perl_privlib}/*.pl
 
-## *.ph files (could be made a separate package, but an autohelper's support is needed)
+# *.ph files (could be made a separate package, but an autohelper's support is needed)
 %{perl_archlib}/*.ph
 %{perl_archlib}/asm
 %{perl_archlib}/asm-generic
@@ -694,7 +661,6 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{perl_archlib}/auto/Compress/Raw
 %dir %{perl_archlib}/auto/Compress/Raw/*/
 %{perl_archlib}/Compress
-%{perl_archlib}/auto/Compress/Raw/*/*.ix
 %{perl_privlib}/Compress
 %{_mandir}/man3/Compress*
 
@@ -736,12 +702,10 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_privlib}/Filter
 %{_mandir}/man3/Filter*
 
-%if %{with gdbm}
 %{perl_archlib}/GDBM_File.*
 %dir %{perl_archlib}/auto/GDBM_File
 %attr(755,root,root) %{perl_archlib}/auto/GDBM_File/*.so
 %{_mandir}/man3/GDBM_File.*
-%endif
 
 %attr(755,root,root) %{perl_archlib}/auto/Hash/*/*.so
 %attr(755,root,root) %{perl_archlib}/auto/Hash/*/*/*.so
@@ -800,11 +764,6 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_archlib}/Sys
 %{_mandir}/man3/Sys::*
 
-%attr(755,root,root) %{perl_archlib}/auto/Text/Soundex/*.so
-%dir %{perl_archlib}/auto/Text
-%dir %{perl_archlib}/auto/Text/Soundex
-%{perl_archlib}/Text
-
 %attr(755,root,root) %{perl_archlib}/auto/Time/*/*.so
 %dir %{perl_archlib}/auto/Time
 %dir %{perl_archlib}/auto/Time/*/
@@ -825,7 +784,6 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{perl_privlib}/Module
 %dir %{perl_privlib}/Net
 %dir %{perl_privlib}/Perl
-%dir %{perl_privlib}/Version
 %{perl_archlib}/Scalar
 %{perl_privlib}/AnyDBM*
 %{perl_privlib}/App
@@ -842,13 +800,11 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_privlib}/HTTP/Tiny.pm
 %{perl_privlib}/IPC
 %{perl_privlib}/Locale
-%{perl_privlib}/Log
 %{perl_privlib}/Memoize*
 %{perl_privlib}/Module/[CLMP]*
 %{perl_privlib}/NEXT.pm
 %{perl_privlib}/Net/*.pm
 %{perl_privlib}/Net/FTP
-%{perl_privlib}/Object
 %{perl_privlib}/Package
 %{perl_privlib}/Params
 %{perl_privlib}/Parse
@@ -856,7 +812,6 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_privlib}/Pod
 %{perl_privlib}/Search
 %{perl_privlib}/SelfLoader.*
-%{perl_privlib}/Shell.*
 %{perl_privlib}/TAP
 %{perl_privlib}/Term
 %{perl_privlib}/Test*
@@ -864,7 +819,6 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_privlib}/Thread*
 %{perl_privlib}/UNIVERSAL.*
 %{perl_privlib}/User
-%{perl_privlib}/Version/Requirements.pm
 %{_mandir}/man3/AnyDBM*
 %{_mandir}/man3/App::Prove*
 %{_mandir}/man3/Archive*
@@ -879,12 +833,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/FindBin.*
 %{_mandir}/man3/HTTP::Tiny.*
 %{_mandir}/man3/Locale::*
-%{_mandir}/man3/Log::*
 %{_mandir}/man3/Memoize*
 %{_mandir}/man3/Module::[CLMP]*
 %{_mandir}/man3/NEXT*
 %{_mandir}/man3/Net::*
-%{_mandir}/man3/Object::*
 %{_mandir}/man3/Package::*
 %{_mandir}/man3/Params::*
 %{_mandir}/man3/Parse::CPAN::Meta*
@@ -893,7 +845,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Scalar::*
 %{_mandir}/man3/Search::*
 %{_mandir}/man3/SelfLoader.*
-%{_mandir}/man3/Shell.*
 %{_mandir}/man3/TAP::*
 %{_mandir}/man3/Term::*
 %{_mandir}/man3/Test*
@@ -901,7 +852,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Thread*
 %{_mandir}/man3/UNIVERSAL.*
 %{_mandir}/man3/User::*
-%{_mandir}/man3/Version::Requirements.*
 
 %attr(755,root,root) %{_bindir}/json_pp
 %{perl_privlib}/JSON
@@ -916,6 +866,7 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_privlib}/pod/perldiag.pod
 %{perl_privlib}/pod/perlfaq*.pod
 %{perl_privlib}/pod/perlfunc.pod
+%{perl_privlib}/perlfaq.pm
 %{_mandir}/man1/perldoc.*
 
 %files tools
@@ -931,6 +882,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_bindir}/ptargrep
 %attr(755,root,root) %{_bindir}/s2p
 %attr(755,root,root) %{_bindir}/shasum
+%attr(755,root,root) %{_bindir}/zipdetails
 %{_mandir}/man1/a2p.*
 %{_mandir}/man1/corelist.*
 %{_mandir}/man1/find2perl.*
@@ -942,11 +894,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/ptargrep.*
 %{_mandir}/man1/s2p.*
 %{_mandir}/man1/shasum.*
+%{_mandir}/man1/zipdetails.1*
 
 %files tools-devel
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/c2ph
-%attr(755,root,root) %{_bindir}/dprofpp
 %attr(755,root,root) %{_bindir}/h2ph
 %attr(755,root,root) %{_bindir}/h2xs
 %attr(755,root,root) %{_bindir}/perlbug
@@ -957,7 +909,6 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_bindir}/splain
 %attr(755,root,root) %{_bindir}/xsubpp
 %{_mandir}/man1/c2ph.*
-%{_mandir}/man1/dprofpp.*
 %{_mandir}/man1/h2ph.*
 %{_mandir}/man1/h2xs.*
 %{_mandir}/man1/perlbug.*
