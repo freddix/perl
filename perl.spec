@@ -16,13 +16,13 @@
 
 Summary:	Practical Extraction and Report Language (Perl)
 Name:		perl
-Version:	5.20.1
+Version:	5.20.2
 Release:	1
 Epoch:		1
 License:	GPL v1+ or Artistic
 Group:		Development/Languages/Perl
 Source0:	http://www.cpan.org/src/%{name}-%{version}.tar.gz
-# Source0-md5:	7a195abb7d6769f751e90c7d30dcf2e0
+# Source0-md5:	81b17b9a4e5ee18e54efe906c9bf544d
 Source1:	%{name}.prov
 Patch0:		%{name}-errno_h-parsing.patch
 Patch1:		%{name}-soname.patch
